@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta name="msvalidate.01" content="2750CF8DC6115CF1D19806DE32ED8C22" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码生成器</title>
+    <style>
+        body {
+          font-family: 'Microsoft YaHei', Arial, sans-serif;
+          background-color: #f0f0f0;
+          color: #333;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+        }
+        .container {
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          width: 90%;
+          max-width: 400px;
+        }
+        h2 {
+          text-align: center;
+          color: #3498db;
+        }
+        label {
+          display: flex;
+          align-items: center;
+          margin: 10px 0;
+        }
+        label input[type="checkbox"] {
+          margin-right: 10px;
+        }
+        input[type="number"], button {
+          width: 100%;
+          padding: 10px;
+          margin: 10px 0;
+          box-sizing: border-box;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+        }
+        button {
+          background-color: #3498db;
+          color: white;
+          border: none;
+          cursor: pointer;
+          transition: background-color 0.3s;
+        }
+        button:hover {
+          background-color: #2980b9;
+        }
+        #password {
+          text-align: center;
+          font-size: 1.2em;
+          font-weight: bold;
+          color: #3498db;
+          margin-top: 10px;
+        }
+        .strength-meter {
+          height: 5px;
+          background-color: #e0e0e0;
+          border-radius: 5px;
+          overflow: hidden;
+          margin: 10px 0;
+        }
+        .strength-meter .strength {
+          height: 100%;
+          width: 0;
+          transition: width 0.3s;
+        }
+        .strength-meter.weak .strength {
+          background-color: red;
+        }
+        .strength-meter.medium .strength {
+          background-color: orange;
+        }
+        .strength-meter.strong .strength {
+          background-color: green;
+        }
+        .password-history {
+          margin-top: 20px;
+        }
+        .password-history ul {
+          list-style-type: none;
+          padding: 0;
+        }
+        .password-history li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background-color: #f9f9f9;
+          padding: 5px;
+          margin: 5px 0;
+          border-radius: 4px;
+        }
+        .password-history button {
+          background-color: #3498db;
+          color: white;
+          border: none;
+          cursor: pointer;
+          transition: background-color 0.3s;
+          padding: 5px 10px;
+          border-radius: 4px;
+        }
+        .password-history button:hover {
+          background-color: #2980b9;
+        }
+        @media (max-width: 600px) {
+          .container {
+            padding: 10px;
+          }
+          input[type="number"], input[type="checkbox"], button {
+            padding: 8px;
+          }
+        }
+    </style>
+<meta name="msvalidate.01" content="2750CF8DC6115CF1D19806DE32ED8C22" />
+</head>
+
+<body>
+    <div class="container">
+        <h2>密码生成器</h2>
+        <label for="length">密码长度</label>
+        <input type="number" id="length" value="12" min="6" max="20">
+        <div>
+            <label>包含数字<input type="checkbox" id="num" checked></label>
+            <label>包含大写字母<input type="checkbox" id="upper" checked></label>
+            <label>包含小写字母<input type="checkbox" id="lower" checked></label>
+            <label>包含特殊字符<input type="checkbox" id="special" checked></label>
+        </div>
+        <button onclick="generatePassword()">生成密码</button>
+        <div id="password"></div>
+        <div class="strength-meter" id="strength-meter">
+            <div class="strength" id="strength-bar"></div>
+        </div>
+        <p id="strength-text"></p>
+        <div class="password-history" id="password-history">
+            <h3>密码历史</h3>
+            <ul></ul>
+        </div>
+    </div>
+
+    <script>
+        let generatedPasswords = [];
+        
+        function generatePassword() {
+          var length = document.getElementById('length').value;
+          var charset = '';
+          if (document.getElementById('num').checked) charset += '0123456789';
+          if (document.getElementById('upper').checked) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          if (document.getElementById('lower').checked) charset += 'abcdefghijklmnopqrstuvwxyz';
+          if (document.getElementById('special').checked) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+          if (charset.length === 0) {
+            charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+-=[]{}|;:,.<>?';
+          }
+        
+          var password = '';
+          for (var i = 0; i < length; i++) {
+            var randomPos = Math.floor(Math.random() * charset.length);
+            password += charset[randomPos];
+          }
+        
+          document.getElementById('password').textContent = password;
+          updateStrengthMeter(password);
+          autoCopyPassword(password);
+          recordPasswordHistory(password);
+        }
+        
+        function autoCopyPassword(password) {
+          navigator.clipboard.writeText(password).then(() => {
+            console.log('Password copied to the clipboard');
+          }).catch(err => {
+            console.error('Failed to copy: ', err);
+          });
+        }
+        
+        function updateStrengthMeter(password) {
+          var strengthBar = document.getElementById('strength-bar');
+          var strengthText = document.getElementById('strength-text');
+          var strengthMeter = document.getElementById('strength-meter');
+          var score = calculatePasswordStrength(password);
+        
+          strengthBar.style.width = (score / 100) * 100 + '%';
+          strengthMeter.className = 'strength-meter';
+          if (score <= 25) {
+            strengthMeter.classList.add('weak');
+            strengthText.textContent = '密码强度：弱';
+          } else if (score <= 50) {
+            strengthMeter.classList.add('medium');
+            strengthText.textContent = '密码强度：中等';
+          } else {
+            strengthMeter.classList.add('strong');
+            strengthText.textContent = '密码强度：强';
+          }
+        }
+        
+        function calculatePasswordStrength(password) {
+          var score = 0;
+          if (password.length < 6) {
+            score = 0;
+          } else if (password.length >= 6 && password.length <= 12) {
+            score = 50;
+          } else if (password.length > 12) {
+            score = 100;
+          }
+          if (/[A-Z]/.test(password)) score += 10;
+          if (/[a-z]/.test(password)) score += 10;
+          if (/[0-9]/.test(password)) score += 10;
+          if (/[\W_]/.test(password)) score += 10;
+          return score;
+        }
+        
+        function recordPasswordHistory(password) {
+          var historyList = document.getElementById('password-history').getElementsByTagName('ul')[0];
+          var listItem = document.createElement('li');
+          var passwordText = document.createTextNode(password);
+          listItem.appendChild(passwordText);
+          var copyButton = document.createElement('button');
+          copyButton.textContent = '复制';
+          copyButton.onclick = function() { copyPassword(password); };
+          listItem.appendChild(copyButton);
+          historyList.appendChild(listItem);
+          if (historyList.children.length > 5) {
+            historyList.removeChild(historyList.firstChild);
+          }
+        }
+        
+        function copyPassword(password) {
+          navigator.clipboard.writeText(password).then(() => {
+            console.log('Password copied to the clipboard');
+          }).catch(err => {
+            console.error('Failed to copy: ', err);
+          });
+        }
+    </script>
+</body>
+
+</html>
